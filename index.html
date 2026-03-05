@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Energy Simulation Control</title>
+
+<style>
+
+body{
+font-family:Arial;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+height:100vh;
+background:#f0f0f0;
+}
+
+h1{
+font-size:50px;
+margin-bottom:60px;
+}
+
+button{
+width:500px;
+height:180px;
+font-size:50px;
+border:none;
+border-radius:20px;
+margin:40px;
+color:white;
+cursor:pointer;
+font-weight:bold;
+}
+
+.sim{
+background:red;
+}
+
+.org{
+background:green;
+}
+
+button:hover{
+opacity:0.9;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Energy Control Panel</h1>
+
+<button class="sim" onclick="simulation()">SIMULATION</button>
+
+<button class="org" onclick="original()">ORIGINAL</button>
+
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCcWCE48z_ePkGuYcQqykL-SAIW_cXW5VQ",
+  authDomain: "tifive-78865.firebaseapp.com",
+  databaseURL: "https://tifive-78865-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "tifive-78865",
+  storageBucket: "tifive-78865.firebasestorage.app",
+  messagingSenderId: "942961080091",
+  appId: "1:942961080091:web:9c9466002d72ddb903c5be",
+  measurementId: "G-PNYNYW7P4L"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let backupHouse1 = null;
+let backupHouse2 = null;
+
+window.simulation = async function(){
+
+const snapshot = await get(ref(db,"energy_data"));
+
+if(snapshot.exists()){
+
+const data = snapshot.val();
+
+backupHouse1 = data.house_01;
+backupHouse2 = data.house_02;
+
+const transformer = data.transformer_01;
+
+let power = transformer.power / 2;
+let current = transformer.current / 2;
+let voltage = transformer.voltage;
+
+await update(ref(db,"energy_data/house_01"),{
+power:power,
+current:current,
+voltage:voltage
+});
+
+await update(ref(db,"energy_data/house_02"),{
+power:power,
+current:current,
+voltage:voltage
+});
+
+}
+
+}
+
+window.original = async function(){
+
+if(backupHouse1 && backupHouse2){
+
+await update(ref(db,"energy_data/house_01"), backupHouse1);
+
+await update(ref(db,"energy_data/house_02"), backupHouse2);
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>
